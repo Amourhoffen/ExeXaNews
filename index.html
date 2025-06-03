@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evexa News Feed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Base CSS Variables for Theming */
+        :root {
+            --primary-color: #6366f1; /* Indigo 500 */
+            --secondary-color: #a78bfa; /* Violet 400 */
+            --bg-body: #0f172a; /* Slate 900 */
+            --bg-card: #1e293b; /* Slate 800 */
+            --text-light: #f8fafc; /* Slate 50 */
+            --text-muted: #94a3b8; /* Slate 400 */
+            --border-color: #334155; /* Slate 700 */
+            --input-bg: #334155; /* Slate 700 */
+            --button-bg: #4f46e5; /* Indigo 600 */
+            --button-hover-bg: #4338ca; /* Indigo 700 */
+            --danger-color: #ef4444; /* Red 500 */
+            --danger-hover-color: #dc2626; /* Red 600 */
+            --favorite-color: #f59e0b; /* Amber 500 */
+            --favorite-hover-color: #d97706; /* Amber 600 */
+            --toggle-bg-off: #6b7280; /* Gray 500 */
+            --toggle-bg-on: #10b981; /* Emerald 500 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        /* Controls Section */
+        #controls {
+            background-color: var(--bg-card);
+            padding: 1.5rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative; /* For dropdown positioning */
+            z-index: 20; /* Ensure controls are above news feed */
+        }
+
+        #controls select,
+        #controls label {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        #controls select {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            appearance: none; /* Remove default arrow */
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.5em 1.5em;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        #controls select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Custom Topic Dropdown */
+        .custom-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: var(--text-light);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .dropdown-toggle:hover {
+            background-color: var(--border-color);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: var(--bg-card);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0;
+            z-index: 100;
+            top: 100%; /* Position below the toggle */
+            left: 0;
+            border: 1px solid var(--border-color);
+            margin-top: 0.5rem; /* Space between toggle and content */
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-content label {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            width: 100%; /* Make label fill width */
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        .dropdown-content label:hover {
+            background-color: var(--input-bg);
+        }
+
+        .dropdown-content input[type="checkbox"] {
+            margin-right: 0.75rem;
+            accent-color: var(--primary-color); /* Style checkbox */
+            width: 1.15rem;
+            height: 1.15rem;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--toggle-bg-off);
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--toggle-bg-on);
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px var(--toggle-bg-on);
+        }
+        input:checked + .slider:before {
+            -webkit-transform: translateX(26px);
+            -ms-transform: translateX(26px);
+            transform: translateX(26px);
+        }
+
+        /* Control Buttons (Icon-only) */
+        .control-button {
+            background-color: var(--button-bg);
+            color: white;
+            padding: 0.75rem; /* Make buttons more square for icons */
+            width: 44px; /* Fixed width for consistent square look */
+            height: 44px; /* Fixed height for consistent square look */
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            display: flex; /* For icon centering */
+            align-items: center;
+            justify-content: center; /* Center the icon */
+            font-size: 1.25rem; /* Larger icon size */
+        }
+        .control-button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-1px);
+        }
+        .control-button:active {
+            transform: translateY(0);
+        }
+
+        /* Input field for dictionary */
+        .knowledge-input {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: var(--text-light);
+            width: 150px; /* Adjust width as needed */
+            transition: border-color 0.2s ease;
+        }
+        .knowledge-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+
+        /* Main Content Area */
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Pinterest-like Masonry Layout */
+        #news-feed {
+            column-count: 3; /* Default to 3 columns for larger screens */
+            column-gap: 1.5rem; /* Gap between columns */
+        }
+
+        .news-card {
+            background-color: var(--bg-card);
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem; /* Space between cards within a column */
+            break-inside: avoid-column; /* Prevent cards from breaking across columns */
+        }
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .news-card img {
+            width: 100%;
+            height: auto; /* Allow image to take natural height */
+            object-fit: cover;
+            border-bottom: 1.5px solid var(--border-color);
+        }
+
+        /* New styles for cards without images */
+        .news-card.news-card-no-image .card-content {
+            padding-top: 1.5rem; /* Slightly more padding at the top */
+            padding-bottom: 1.5rem; /* Slightly more padding at the bottom */
+            /* Ensure it looks good without the image space */
+        }
+
+
+        .card-content {
+            padding: 1.25rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-content h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--primary-color);
+            line-height: 1.3;
+        }
+        .card-content h3 a {
+            color: inherit;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .card-content h3 a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+
+        .card-content p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            flex-grow: 1; /* Allow summary to take available space */
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        /* Card action buttons (Favorite, Delete) - Icon only */
+        .card-actions button {
+            background-color: var(--button-bg);
+            color: white;
+            padding: 0.6rem; /* Adjust padding for icon only */
+            width: 38px; /* Fixed width for consistent square look */
+            height: 38px; /* Fixed height for consistent square look */
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            margin-left: 0.5rem;
+            font-size: 1rem; /* Icon size */
+            display: inline-flex; /* For icon centering */
+            align-items: center;
+            justify-content: center;
+        }
+        .card-actions button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-1px);
+        }
+        .card-actions button:active {
+            transform: translateY(0);
+        }
+
+        .card-actions .delete-btn {
+            background-color: var(--danger-color);
+        }
+        .card-actions .delete-btn:hover {
+            background-color: var(--danger-hover-color);
+        }
+
+        .card-actions .favorite-btn {
+            background-color: var(--button-bg); /* Default button background */
+        }
+        .card-actions .favorite-btn:hover {
+            background-color: var(--button-hover-bg);
+        }
+        .card-actions .favorite-btn.favorited {
+            background-color: var(--favorite-color); /* Amber for favorited */
+        }
+        .card-actions .favorite-btn.favorited:hover {
+            background-color: var(--favorite-hover-color);
+        }
+
+        /* Loading Indicator */
+        #loading-indicator {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            display: none; /* Hidden by default */
+        }
+        #loading-indicator.show {
+            display: block;
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error/Message Box */
+        #message-box {
+            background-color: var(--danger-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+            display: none;
+        }
+        #message-box.show {
+            display: block;
+        }
+
+        /* Knowledge Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Dark overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px); /* Stronger blur for modal */
+            -webkit-backdrop-filter: blur(10px);
+            max-width: 90%;
+            width: 500px; /* Wider modal */
+            color: var(--text-light);
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            position: relative; /* For close button positioning */
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-content h3 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .modal-content p {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            text-align: left; /* Align text left for readability */
+            max-height: 300px; /* Limit height for scrollability */
+            overflow-y: auto; /* Enable scrolling for long content */
+            padding-right: 0.5rem; /* Space for scrollbar */
+        }
+        .modal-content p::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-content p::-webkit-scrollbar-track {
+            background: var(--input-bg);
+            border-radius: 10px;
+        }
+        .modal-content p::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .modal-close-btn:hover {
+            color: var(--danger-color);
+        }
+
+
+        /* Mobile Responsiveness for Columns */
+        @media (max-width: 1024px) { /* Adjust columns for tablets */
+            #news-feed {
+                column-count: 2;
+            }
+        }
+
+        @media (max-width: 768px) { /* Adjust columns for smaller tablets and mobiles */
+            header {
+                padding: 0.8rem 1rem;
+            }
+            #controls {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 1rem;
+            }
+            #controls select {
+                width: 100%;
+            }
+            .control-button {
+                width: 44px; /* Maintain fixed size */
+                height: 44px; /* Maintain fixed size */
+                margin: 0.25rem; /* Add some margin for touch targets */
+            }
+            /* Adjust flex wrap for control buttons on small screens */
+            #controls > div.flex {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            .knowledge-input {
+                flex-grow: 1; /* Allow input to grow */
+                width: auto; /* Override fixed width */
+            }
+            main {
+                padding: 1rem;
+            }
+            #news-feed {
+                column-count: 1; /* Single column on mobile */
+            }
+            .news-card {
+                margin-bottom: 1rem;
+            }
+            .card-actions button {
+                margin-left: 0.25rem; /* Smaller margin for card action buttons */
+                margin-top: 0.25rem; /* Allow stacking if needed */
+            }
+            .card-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            .custom-dropdown {
+                width: 100%; /* Full width on mobile */
+            }
+            .dropdown-toggle {
+                width: 100%;
+                justify-content: space-between; /* Push icon to end */
+            }
+            .dropdown-content {
+                width: 100%; /* Full width dropdown content */
+            }
+            .modal-content {
+                padding: 1.5rem;
+            }
+            .modal-content h3 {
+                font-size: 1.5rem;
+            }
+            .modal-content p {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Evexa Buddy Loader Styles */
+        #evexaLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-body); /* Match body background for seamless transition */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* Ensure it's on top of everything */
+            opacity: 1;
+            transition: opacity 0.7s ease-out, visibility 0.7s ease-out; /* Slower fade-out */
+            visibility: visible;
+        }
+
+        #evexaLoader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none; /* Disable interaction when hidden */
+        }
+
+        .loader-logo {
+            width: 100px; /* Size of the logo/icon */
+            height: 100px;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 900;
+            color: white;
+            box-shadow: 0 0 30px var(--primary-color), 0 0 60px var(--secondary-color);
+            animation: pulse-logo 2s infinite ease-in-out;
+        }
+
+        .loader-text {
+            font-size: 2.5rem; /* Larger loader text */
+            font-weight: 900;
+            color: var(--primary-color);
+            text-shadow: 3px 3px 10px rgba(0,0,0,0.6), 0 0 25px rgba(99, 102, 241, 0.8); /* Adjusted to primary color */
+            margin-bottom: 2rem; /* Increased margin */
+            letter-spacing: 0.05em;
+        }
+
+        .loader-spinner {
+            width: 80px; /* Larger spinner */
+            height: 80px;
+            border: 10px solid rgba(255,255,255,0.2); /* Thicker, more subtle border */
+            border-top: 10px solid var(--secondary-color); /* Thicker, more prominent top border */
+            border-radius: 50%;
+            animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite; /* More dynamic spin */
+            box-shadow: 0 0 20px var(--secondary-color); /* Glow for spinner */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-logo {
+            0% { transform: scale(1); box-shadow: 0 0 30px var(--primary-color), 0 0 60px var(--secondary-color); }
+            50% { transform: scale(1.05); box-shadow: 0 0 40px var(--primary-color), 0 0 80px var(--secondary-color); }
+            100% { transform: scale(1); box-shadow: 0 0 30px var(--primary-color), 0 0 60px var(--secondary-color); }
+        }
+    </style>
+</head>
+<body>
+    <div id="evexaLoader">
+        <div class="loader-logo">E</div>
+        <div class="loader-text">Evexa Feed Loading...</div>
+        <div class="loader-spinner"></div>
+    </div>
+
+    <header class="text-center text-3xl font-extrabold text-primary-color py-4">
+        Evexa News Feed
+    </header>
+
+    <div id="controls">
+        <div class="custom-dropdown">
+            <button id="topic-dropdown-toggle" class="dropdown-toggle">
+                Select Topics <i class="fas fa-chevron-down ml-2"></i>
+            </button>
+            <div id="topic-dropdown-content" class="dropdown-content">
+                </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <label for="region-select">Region:</label>
+            <select id="region-select" class="form-select">
+                <option value="global">Global</option>
+                <option value="india" selected>India</option> <option value="usa">USA</option>
+            </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <label for="reddit-toggle">Include Reddit Posts:</label>
+            <label class="toggle-switch">
+                <input type="checkbox" id="reddit-toggle" checked> <span class="slider"></span>
+            </label>
+        </div>
+
+        <button id="refresh-button" class="control-button" title="Refresh Feed">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+
+        <button id="random-fact-button" class="control-button" title="Get Random Fact">
+            <i class="fas fa-lightbulb"></i>
+        </button>
+
+        <div class="flex items-center gap-2">
+            <input type="text" id="word-input" class="knowledge-input" placeholder="Define word">
+            <button id="define-word-button" class="control-button" title="Define Word">
+                <i class="fas fa-book"></i>
+            </button>
+        </div>
+
+        <button id="quote-button" class="control-button" title="Quote of the Day">
+            <i class="fas fa-quote-right"></i>
+        </button>
+
+        <button id="holidays-button" class="control-button" title="Public Holidays">
+            <i class="fas fa-calendar-alt"></i>
+        </button>
+    </div>
+
+    <main>
+        <div id="message-box" class="hidden"></div>
+        <div id="news-feed">
+            </div>
+        <div id="loading-indicator" class="show">
+            <div class="spinner"></div>
+            Loading news...
+        </div>
+    </main>
+
+    <div id="knowledge-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="knowledge-modal-close-btn">&times;</button>
+            <h3 id="knowledge-modal-title"></h3>
+            <p id="knowledge-modal-content"></p>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        // IMPORTANT: Using rss2json.com for demonstration.
+        // This service offers a free tier, but for production, consider building a simple backend proxy
+        // to avoid rate limits and enhance reliability.
+        const RSS_TO_JSON_API = 'https://api.rss2json.com/v1/api.json?rss_url=';
+        
+        // Random Fact API: Free and open to use.
+        const RANDOM_FACT_API = 'https://uselessfacts.jsph.pl/random.json';
+        
+        // Dictionary API: Free and open-source.
+        const DICTIONARY_API = 'https://api.dictionaryapi.dev/api/v2/entries/en/'; 
+        
+        // Quote API: ZenQuotes offers a free tier with attribution required and rate limits (5 requests/30 seconds per IP).
+        const QUOTE_API = 'https://zenquotes.io/api/random'; 
+        
+        // Public Holidays API: Free for non-commercial use.
+        const HOLIDAYS_API_BASE = 'https://date.nager.at/api/v3/PublicHolidays'; 
+
+        // IMPORTANT: Replace 'YOUR_NEWSAPI_KEY' with your actual API key from newsapi.org
+        // Keep this key secure in a real application by using a backend proxy.
+        const NEWSAPI_KEY = 'YOUR_NEWSAPI_KEY'; 
+
+        const NEWS_FEEDS = {
+            science: {
+                global: [
+                    { type: 'rss', url: 'http://feeds.bbci.co.uk/news/science_and_environment/rss.xml' },
+                    { type: 'rss', url: 'https://www.sciencedaily.com/rss/top/science.xml' }
+                ],
+                india: [
+                    { type: 'rss', url: 'https://indianexpress.com/section/science/feed/' },
+                    { type: 'rss', url: 'https://timesofindia.indiatimes.com/rssfeeds/5482957.cms' }
+                ],
+                usa: [
+                    { type: 'rss', url: 'https://www.sciencenews.org/feed' },
+                    { type: 'rss', url: 'https://www.nasa.gov/rss/dyn/breaking_news.rss' }
+                ],
+            },
+            technology: {
+                global: [
+                    { type: 'rss', url: 'https://www.theverge.com/rss/index.xml' },
+                    { type: 'rss', url: 'http://feeds.feedburner.com/TechCrunch/' },
+                    { type: 'rss', url: 'https://feeds.bbci.co.uk/news/technology/rss.xml' }
+                ],
+                india: [
+                    { type: 'rss', url: 'https://indianexpress.com/section/technology/feed/' },
+                    { type: 'rss', url: 'https://timesofindia.indiatimes.com/rssfeeds/67006603.cms' },
+                    { type: 'rss', url: 'https://www.gadgets360.com/rss/news' },
+                    { type: 'rss', url: 'https://www.medianama.com/feed/' }
+                ],
+                usa: [
+                    { type: 'rss', url: 'https://www.wired.com/feed/rss' },
+                    { type: 'rss', url: 'https://arstechnica.com/feed/' }
+                ],
+            },
+            crypto: {
+                global: [
+                    { type: 'rss', url: 'https://www.coindesk.com/feed' },
+                    { type: 'rss', url: 'https://cointelegraph.com/rss' }
+                ],
+                india: [], 
+                usa: [
+                    { type: 'rss', url: 'https://decrypt.co/feed' },
+                    { type: 'rss', url: 'https://blockworks.co/feed' }
+                ],
+            },
+            world: {
+                global: [
+                    { type: 'rss', url: 'http://feeds.bbci.co.uk/news/world/rss.xml' },
+                    { type: 'rss', url: 'https://www.reuters.com/arc/feed/rss/' }
+                ],
+                india: [
+                    { type: 'rss', url: 'https://indianexpress.com/section/world/feed/' },
+                    { type: 'rss', url: 'https://www.thehindu.com/feeder/default.rss' },
+                    // Removed: { type: 'rss', url: 'https://www.indiatoday.in/rss/home' }, // Removed due to consistent 500 errors
+                    { type: 'rss', url: 'https://www.hindustantimes.com/feeds/rss/latest/rssfeed.xml' }, 
+                    { type: 'rss', url: 'https://zeenews.india.com/rss/india-news.xml' }
+                ], 
+                usa: [
+                    { type: 'rss', url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' },
+                    { type: 'rss', url: 'http://feeds.washingtonpost.com/rss/world' }
+                ],
+            },
+            business: {
+                global: [
+                    { type: 'rss', url: 'http://feeds.bbci.co.uk/news/business/rss.xml' },
+                    { type: 'rss', url: 'https://www.cnbc.com/id/10000664/device/rss/rss.html' }
+                ],
+                india: [
+                    { type: 'rss', url: 'https://indianexpress.com/section/business/feed/' }, 
+                    { type: 'rss', url: 'https://timesofindia.com/rssfeeds/1898055.cms' }, 
+                    // Removed: { type: 'rss', url: 'https://www.indiatoday.in/rss/home' }, // Removed due to consistent 500 errors
+                    { type: 'rss', url: 'https://www.hindustantimes.com/feeds/rss/latest/rssfeed.xml' }, 
+                    { type: 'rss', url: 'https://economictimes.indiatimes.com/rssfeeds/133491972.cms' }, 
+                    // Removed: { type: 'rss', url: 'https://www.business-standard.com/rss/latest.rss' }, // Removed due to consistent 500 errors
+                    { type: 'rss', url: 'https://www.financialexpress.com/feed/' } // Added Financial Express
+                ],
+                usa: [
+                    { type: 'rss', url: 'https://www.bloomberg.com/feed/podcast/bloomberg-daybreak-americas' }
+                ],
+            },
+            finance: { 
+                global: [],
+                india: [],
+                usa: [
+                    { type: 'newsapi', domain: 'wsj.com', name: 'Wall Street Journal' }
+                ]
+            },
+            history: { 
+                global: [
+                    { type: 'rss', url: 'https://www.smithsonianmag.com/rss/history/' }, 
+                    { type: 'rss', url: 'https://www.history.com/.rss/full/' }
+                ],
+                india: [], 
+                usa: [],
+            },
+            motivation: { 
+                global: [
+                    { type: 'rss', url: 'https://www.psychologytoday.com/us/blog/the-power-motivation/feed' }, 
+                    { type: 'rss', url: 'https://tinybuddha.com/feed/' }
+                ],
+                india: [],
+                usa: [],
+            },
+            exams: { 
+                global: [],
+                india: [
+                    { type: 'rss', url: 'https://indianexpress.com/section/education/exams/feed/' }
+                ],
+                usa: [],
+            },
+            jobs: { 
+                global: [],
+                india: [
+                    { type: 'rss', url: 'https://indianexpress.com/section/jobs/feed/' }
+                ],
+                usa: [],
+            },
+            startups: { 
+                global: [],
+                india: [
+                    { type: 'rss', url: 'https://yourstory.com/feed' },
+                    { type: 'rss', url: 'https://indianexpress.com/section/startup/feed/' } 
+                ],
+                usa: [],
+            }
+        };
+
+        // --- DOM Elements ---
+        const topicDropdownToggle = document.getElementById('topic-dropdown-toggle');
+        const topicDropdownContent = document.getElementById('topic-dropdown-content');
+        const regionSelect = document.getElementById('region-select');
+        const redditToggle = document.getElementById('reddit-toggle');
+        const refreshButton = document.getElementById('refresh-button');
+        const newsFeedContainer = document.getElementById('news-feed');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const messageBox = document.getElementById('message-box');
+
+        // Knowledge Modal Elements
+        const randomFactButton = document.getElementById('random-fact-button');
+        const wordInput = document.getElementById('word-input');
+        const defineWordButton = document.getElementById('define-word-button');
+        const knowledgeModalOverlay = document.getElementById('knowledge-modal-overlay');
+        const knowledgeModalCloseBtn = document.getElementById('knowledge-modal-close-btn');
+        const knowledgeModalTitle = document.getElementById('knowledge-modal-title');
+        const knowledgeModalContent = document.getElementById('knowledge-modal-content');
+
+        // New Buttons
+        const quoteButton = document.getElementById('quote-button');
+        const holidaysButton = document.getElementById('holidays-button');
+
+        // Loader Element
+        const evexaLoader = document.getElementById('evexaLoader');
+
+
+        // --- State Variables ---
+        let currentPage = 0;
+        let selectedTopics = ['world', 'business', 'startups']; 
+        let currentRegion = 'india';
+        let includeReddit = true;
+        let isLoading = false;
+        let allNewsItems = [];
+        const favorites = new Set(JSON.parse(localStorage.getItem('evexaNewsFavorites') || '[]'));
+
+        // Simple client-client cache for RSS feed responses to avoid hammering rss2json.com
+        const feedCache = {};
+        const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+        // --- Utility Functions ---
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {boolean} isError - True if it's an error message (red background).
+         */
+        function showMessage(message, isError = false) {
+            messageBox.textContent = message;
+            messageBox.className = 'p-4 rounded-lg mt-4 text-center'; // Reset classes
+            if (isError) {
+                messageBox.classList.add('bg-danger-color', 'text-white', 'show');
+            } else {
+                messageBox.classList.add('bg-primary-color', 'text-white', 'show'); // Or a neutral color
+            }
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 5000); // Hide after 5 seconds
+        }
+
+        /**
+         * Shows or hides the loading indicator.
+         * @param {boolean} show - True to show, false to hide.
+         */
+        function toggleLoading(show) {
+            isLoading = show;
+            if (show) {
+                loadingIndicator.classList.add('show');
+            } else {
+                loadingIndicator.classList.remove('show');
+            }
+        }
+
+        /**
+         * Fetches news from a given RSS feed URL via rss2json.com.
+         * Implements simple caching to reduce API calls.
+         * @param {string} feedUrl - The RSS feed URL.
+         * @param {boolean} forceFetch - If true, bypasses the cache and forces a new fetch.
+         * @returns {Promise<Array>} A promise that resolves to an array of news items.
+         */
+        async function fetchRssFeed(feedUrl, forceFetch = false) {
+            const cached = feedCache[feedUrl];
+            if (cached && !forceFetch && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
+                console.log(`Using cached data for ${feedUrl}`);
+                return cached.data;
+            }
+
+            try {
+                const response = await fetch(RSS_TO_JSON_API + encodeURIComponent(feedUrl));
+                if (!response.ok) {
+                    console.error(`HTTP error! status: ${response.status} from ${feedUrl}`);
+                    return []; 
+                }
+                const data = await response.json();
+
+                if (data.status === 'ok' && data.items) {
+                    const items = data.items.map(item => ({
+                        title: item.title,
+                        link: item.link,
+                        thumbnail: (item.enclosure && item.enclosure.link) ? item.enclosure.link : (item.thumbnail || ''),
+                        description: item.description,
+                        pubDate: item.pubDate,
+                        source: data.feed.title || new URL(feedUrl).hostname
+                    }));
+                    feedCache[feedUrl] = { timestamp: Date.now(), data: items };
+                    return items;
+                } else {
+                    console.error('Error fetching RSS feed:', data.message || 'Unknown error');
+                    return [];
+                }
+            } catch (error) {
+                console.error(`Could not fetch feed ${feedUrl}:`, error);
+                showMessage(`Failed to load news from ${new URL(feedUrl).hostname}. This might be a temporary issue with the source or proxy.`, true);
+                return []; 
+            }
+        }
+
+        /**
+         * Fetches news from NewsAPI.org.
+         * @param {string} domain - The domain to fetch news from (e.g., 'wsj.com').
+         * @param {string} apiKey - Your NewsAPI.org API key.
+         * @param {string} sourceName - A friendly name for the source (e.g., 'Wall Street Journal').
+         * @returns {Promise<Array>} A promise that resolves to an array of news items.
+         */
+        async function fetchNewsApiFeed(domain, apiKey, sourceName) {
+            const apiUrl = `https://newsapi.org/v2/everything?domains=${domain}&apiKey=${apiKey}`;
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    console.error(`HTTP error! status: ${response.status} from NewsAPI for domain ${domain}`);
+                    return [];
+                }
+                const data = await response.json();
+                if (data.status === 'ok' && data.articles) {
+                    return data.articles.map(article => ({
+                        title: article.title,
+                        link: article.url,
+                        thumbnail: article.urlToImage || '', 
+                        description: article.description || '', 
+                        pubDate: article.publishedAt,
+                        source: article.source.name || article.source.id || sourceName 
+                    }));
+                } else {
+                    console.error('Error fetching NewsAPI feed:', data.message || 'Unknown error');
+                    return [];
+                }
+            } catch (error) {
+                console.error(`Could not fetch NewsAPI feed for ${domain}:`, error);
+                showMessage(`Failed to load news from ${sourceName}. This might be a temporary issue or API key problem.`, true);
+                return [];
+            }
+        }
+
+        /**
+         * Filters news items to remove those older than 2 days.
+         * @param {Array} newsItems - Array of news items.
+         * @returns {Array} Filtered array.
+         */
+        function filterOldNews(newsItems) {
+            const twoDaysAgo = new Date();
+            twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+
+            return newsItems.filter(item => {
+                const pubDate = new Date(item.pubDate);
+                return pubDate >= twoDaysAgo;
+            });
+        }
+
+        /**
+         * Fetches and displays news based on current filters.
+         * @param {boolean} clearExisting - If true, clears existing news before rendering.
+         * @param {boolean} forceFetch - If true, forces a new fetch from RSS sources, bypassing cache.
+         */
+        async function loadNews(clearExisting = true, forceFetch = false) {
+            if (isLoading) return;
+            toggleLoading(true);
+            messageBox.classList.remove('show');
+
+            if (clearExisting) {
+                newsFeedContainer.innerHTML = '';
+                allNewsItems = [];
+                currentPage = 0;
+            }
+
+            selectedTopics = Array.from(document.querySelectorAll('#topic-dropdown-content input[type="checkbox"]:checked'))
+                                .map(checkbox => checkbox.value);
+
+            currentRegion = regionSelect.value;
+            includeReddit = redditToggle.checked;
+
+            let fetchedItems = [];
+
+            const fetchPromises = [];
+            selectedTopics.forEach(topic => {
+                const feedsForTopicAndRegion = NEWS_FEEDS[topic]?.[currentRegion];
+                if (feedsForTopicAndRegion) {
+                    feedsForTopicAndRegion.forEach(sourceConfig => {
+                        if (sourceConfig.type === 'rss') {
+                            fetchPromises.push(fetchRssFeed(sourceConfig.url, forceFetch));
+                        } else if (sourceConfig.type === 'newsapi') {
+                            if (NEWSAPI_KEY === 'YOUR_NEWSAPI_KEY' || !NEWSAPI_KEY) {
+                                console.warn('NewsAPI key is not set. Please replace "YOUR_NEWSAPI_KEY" with your actual key in the script.');
+                                showMessage('NewsAPI key is missing or invalid. Please update the code with your key.', true);
+                            } else {
+                                fetchPromises.push(fetchNewsApiFeed(sourceConfig.domain, NEWSAPI_KEY, sourceConfig.name));
+                            }
+                        }
+                    });
+                }
+                // Add Reddit posts if toggled and available for the current topic
+                if (includeReddit && NEWS_FEEDS[topic] && NEWS_FEEDS[topic].reddit) {
+                    fetchPromises.push(fetchRssFeed(NEWS_FEEDS[topic].reddit, forceFetch));
+                }
+            });
+
+            fetchedItems = (await Promise.all(fetchPromises)).flat();
+
+            const freshNews = filterOldNews(fetchedItems);
+            freshNews.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+            const uniqueNews = [];
+            const seenLinks = new Set();
+            for (const item of freshNews) {
+                if (!seenLinks.has(item.link)) {
+                    uniqueNews.push(item);
+                    seenLinks.add(item.link);
+                }
+            }
+
+            allNewsItems = uniqueNews;
+            renderNewsCards(allNewsItems);
+
+            toggleLoading(false);
+
+            if (allNewsItems.length === 0) {
+                showMessage("No news found for your selection or all news is older than 2 days.", false);
+            }
+        }
+
+        /**
+         * Renders news items as cards in the feed.
+         * @param {Array} newsItems - Array of news items to render.
+         */
+        function renderNewsCards(newsItems) {
+            newsFeedContainer.innerHTML = '';
+            newsItems.forEach(item => {
+                const card = document.createElement('div');
+                card.classList.add('news-card');
+                card.dataset.link = item.link;
+
+                const isFavorited = favorites.has(item.link);
+
+                const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+                const formattedDate = new Date(item.pubDate).toLocaleDateString(undefined, dateOptions);
+
+                // Create a temporary div to strip HTML from description
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = item.description;
+                const plainTextDescription = tempDiv.textContent || tempDiv.innerText || ''; // Get plain text
+
+                const hasImage = item.thumbnail && item.thumbnail !== '';
+
+                let cardHtml;
+                if (hasImage) {
+                    cardHtml = `
+                        <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-auto object-cover border-b border-border-color" onerror="this.closest('.news-card').classList.add('news-card-no-image'); this.remove();">
+                        <div class="card-content">
+                            <h3><a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a></h3>
+                            <p>${plainTextDescription.substring(0, 150)}...</p>
+                            <div class="card-footer">
+                                <span>${item.source} - ${formattedDate}</span>
+                                <div class="card-actions">
+                                    <button class="favorite-btn ${isFavorited ? 'favorited' : ''}" data-link="${item.link}" title="${isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}">
+                                        <i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>
+                                    </button>
+                                    <button class="delete-btn" data-link="${item.link}" title="Delete News">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Render card without image if no thumbnail is available
+                    cardHtml = `
+                        <div class="card-content">
+                            <h3><a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a></h3>
+                            <p>${plainTextDescription.substring(0, 150)}...</p>
+                            <div class="card-footer">
+                                <span>${item.source} - ${formattedDate}</span>
+                                <div class="card-actions">
+                                    <button class="favorite-btn ${isFavorited ? 'favorited' : ''}" data-link="${item.link}" title="${isFavorited ? 'Remove from Favorites' : 'Add to Favorites'}">
+                                        <i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>
+                                    </button>
+                                    <button class="delete-btn" data-link="${item.link}" title="Delete News">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    card.classList.add('news-card-no-image'); 
+                }
+
+                card.innerHTML = cardHtml;
+                newsFeedContainer.appendChild(card);
+            });
+
+            addCardButtonListeners();
+        }
+
+        /**
+         * Adds event listeners to favorite and delete buttons on news cards.
+         */
+        function addCardButtonListeners() {
+            document.querySelectorAll('.favorite-btn').forEach(button => {
+                button.onclick = (e) => {
+                    const link = e.currentTarget.dataset.link;
+                    toggleFavorite(link, e.currentTarget);
+                };
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.onclick = (e) => {
+                    const link = e.currentTarget.dataset.link;
+                    deleteNewsCard(link);
+                };
+            });
+        }
+
+        /**
+         * Toggles the favorite status of a news item.
+         * @param {string} link - The link of the news item.
+         * @param {HTMLElement} buttonElement - The favorite button element.
+         */
+        function toggleFavorite(link, buttonElement) {
+            if (favorites.has(link)) {
+                favorites.delete(link);
+                buttonElement.classList.remove('favorited');
+                buttonElement.innerHTML = '<i class="far fa-heart"></i>';
+                buttonElement.title = 'Add to Favorites';
+                showMessage('Removed from favorites!');
+            } else {
+                favorites.add(link);
+                buttonElement.classList.add('favorited');
+                buttonElement.innerHTML = '<i class="fas fa-heart"></i>';
+                buttonElement.title = 'Remove from Favorites';
+                showMessage('Added to favorites!');
+            }
+            localStorage.setItem('evexaNewsFavorites', JSON.stringify(Array.from(favorites)));
+        }
+
+        /**
+         * Deletes a news card from the display.
+         * @param {string} link - The link of the news item to delete.
+         */
+        function deleteNewsCard(link) {
+            const cardToDelete = document.querySelector(`.news-card[data-link="${link}"]`);
+            if (cardToDelete) {
+                cardToDelete.remove();
+                allNewsItems = allNewsItems.filter(item => item.link !== link);
+                showMessage('News item deleted from feed.');
+            }
+        }
+
+        // --- Custom Topic Dropdown Logic ---
+        function populateTopicDropdown() {
+            topicDropdownContent.innerHTML = '';
+            const currentSelected = selectedTopics; 
+            
+            Object.keys(NEWS_FEEDS).forEach(topicKey => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = topicKey;
+                checkbox.id = `topic-${topicKey}`;
+                
+                checkbox.checked = currentSelected.includes(topicKey);
+
+                checkbox.addEventListener('change', () => {
+                    selectedTopics = Array.from(document.querySelectorAll('#topic-dropdown-content input[type="checkbox"]:checked'))
+                                .map(cb => cb.value);
+                    loadNews(true);
+                });
+
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(topicKey.charAt(0).toUpperCase() + topicKey.slice(1)));
+                topicDropdownContent.appendChild(label);
+            });
+        }
+
+        function toggleTopicDropdown() {
+            topicDropdownContent.classList.toggle('show');
+        }
+
+        // Close the dropdown if the user clicks outside of it
+        window.addEventListener('click', (event) => {
+            if (!event.target.closest('.custom-dropdown') && topicDropdownContent.classList.contains('show')) {
+                topicDropdownContent.classList.remove('show');
+            }
+        });
+
+        // --- Knowledge Modal Functions ---
+        function showKnowledgeModal(title, content) {
+            knowledgeModalTitle.textContent = title;
+            knowledgeModalContent.innerHTML = content; 
+            knowledgeModalOverlay.classList.add('show');
+        }
+
+        function hideKnowledgeModal() {
+            knowledgeModalOverlay.classList.remove('show');
+        }
+
+        /**
+         * Fetches a random trivia fact from a new HTTPS API.
+         */
+        async function fetchRandomFact() {
+            try {
+                toggleLoading(true);
+                const response = await fetch(RANDOM_FACT_API);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json(); 
+                if (data && data.text) {
+                    showKnowledgeModal('Random Fact', data.text);
+                } else {
+                    throw new Error('Invalid fact data received.');
+                }
+            } catch (error) {
+                console.error('Error fetching random fact:', error);
+                showMessage('Failed to fetch a random fact. Please try again.', true);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        /**
+         * Fetches the definition of a word from Dictionary API.
+         * @param {string} word - The word to define.
+         */
+        async function fetchWordDefinition(word) {
+            if (!word.trim()) {
+                showMessage('Please enter a word to define.', true);
+                return;
+            }
+            try {
+                toggleLoading(true);
+                const response = await fetch(DICTIONARY_API + encodeURIComponent(word.toLowerCase()));
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showKnowledgeModal('Word Not Found', `Sorry, we couldn't find a definition for "${word}".`);
+                    } else {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return;
+                }
+                const data = await response.json();
+                let definitionHtml = ``;
+
+                if (data && data.length > 0) {
+                    const entry = data[0];
+                    definitionHtml += `<h4 class="font-bold text-lg mb-2">${entry.word}</h4>`;
+                    if (entry.phonetic) {
+                        definitionHtml += `<p class="text-sm text-gray-400 mb-2">${entry.phonetic}</p>`;
+                    }
+
+                    entry.meanings.forEach(meaning => {
+                        definitionHtml += `<h5 class="font-semibold text-md mt-4 mb-1 text-primary-color">${meaning.partOfSpeech}</h5>`;
+                        meaning.definitions.forEach((def, index) => {
+                            definitionHtml += `<p class="mb-1">${index + 1}. ${def.definition}</p>`;
+                            if (def.example) {
+                                definitionHtml += `<p class="text-sm text-gray-400 italic ml-4">"${def.example}"</p>`;
+                            }
+                        });
+                        if (meaning.synonyms && meaning.synonyms.length > 0) {
+                            definitionHtml += `<p class="text-sm mt-2"><strong>Synonyms:</strong> ${meaning.synonyms.join(', ')}</p>`;
+                        }
+                    });
+                } else {
+                    definitionHtml = `No definition found for "${word}".`;
+                }
+                showKnowledgeModal(`Definition of "${word}"`, definitionHtml);
+            } catch (error) {
+                console.error('Error fetching word definition:', error);
+                showMessage('Failed to fetch definition. Please try again.', true);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        /**
+         * Fetches a random quote of the day.
+         */
+        async function fetchRandomQuote() {
+            try {
+                toggleLoading(true);
+                const response = await fetch(QUOTE_API);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (data && data.length > 0 && data[0].q && data[0].a) {
+                    const quote = data[0].q;
+                    const author = data[0].a;
+                    showKnowledgeModal('Quote of the Day', `<p>"${quote}"</p><p class="text-right mt-4">- ${author}</p><p class="text-xs text-gray-500 mt-2">Inspirational quotes provided by <a href="https://zenquotes.io/" target="_blank" rel="noopener noreferrer">ZenQuotes API</a></p>`);
+                } else {
+                    throw new Error('Invalid quote data received.');
+                }
+            } catch (error) {
+                console.error('Error fetching random quote:', error);
+                showMessage('Failed to fetch a random quote. Please try again. (Network connectivity or temporary API issue)', true);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        /**
+         * Fetches public holidays for the current year and selected region.
+         */
+        async function fetchPublicHolidays() {
+            const currentYear = new Date().getFullYear();
+            const countryCodeMap = {
+                'global': 'US', 
+                'india': 'IN',
+                'usa': 'US'
+            };
+            const countryCode = countryCodeMap[currentRegion] || 'US'; 
+
+            try {
+                toggleLoading(true);
+                const response = await fetch(`${HOLIDAYS_API_BASE}/${currentYear}/${countryCode}`);
+
+                if (!response.ok) {
+                    if (response.status === 204 || response.status === 404) {
+                        showKnowledgeModal(`Public Holidays`, `No public holidays found for ${countryCode} in ${currentYear}.`);
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const responseText = await response.text();
+                let data;
+                try {
+                    data = responseText ? JSON.parse(responseText) : []; 
+                } catch (jsonError) {
+                    console.error('JSON parsing error for public holidays:', jsonError, 'Response text:', responseText);
+                    throw new Error('Invalid JSON response from public holidays API.');
+                }
+
+                let holidaysHtml = ``;
+                if (data && data.length > 0) {
+                    holidaysHtml += `<h4 class="font-bold text-lg mb-2">Public Holidays in ${countryCode} (${currentYear})</h4>`;
+                    data.forEach(holiday => {
+                        holidaysHtml += `<p class="mb-1"><strong>${holiday.date}</strong>: ${holiday.name}</p>`;
+                    });
+                } else {
+                    holidaysHtml = `No public holidays found for ${countryCode} in ${currentYear}.`;
+                }
+                showKnowledgeModal(`Public Holidays`, holidaysHtml);
+            } catch (error) {
+                console.error('Error fetching public holidays:', error);
+                showMessage('Failed to fetch public holidays. Please try again or select a different region. (API issue or no data)', true);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+
+        // --- Event Listeners for Controls ---
+        topicDropdownToggle.addEventListener('click', toggleTopicDropdown);
+        topicDropdownToggle.addEventListener('mouseenter', () => {
+            if (!topicDropdownContent.classList.contains('show')) {
+                topicDropdownContent.classList.add('show');
+            }
+        });
+        topicDropdownContent.addEventListener('mouseleave', () => {
+            // This event listener was causing issues with closing the dropdown on click.
+            // The `window.addEventListener('click', ...)` handles closing when clicking outside.
+            // Removing this specific mouseleave to avoid conflicts.
+        });
+
+
+        regionSelect.addEventListener('change', () => {
+            currentRegion = regionSelect.value;
+            loadNews(true);
+        });
+
+        redditToggle.addEventListener('change', () => {
+            includeReddit = redditToggle.checked;
+            loadNews(true);
+        });
+
+        refreshButton.addEventListener('click', () => {
+            loadNews(true, true);
+            showMessage('Refreshing news feed...', false);
+        });
+
+        // Knowledge API Event Listeners
+        randomFactButton.addEventListener('click', fetchRandomFact);
+        defineWordButton.addEventListener('click', () => fetchWordDefinition(wordInput.value));
+        wordInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                fetchWordDefinition(wordInput.value);
+            }
+        });
+        knowledgeModalCloseBtn.addEventListener('click', hideKnowledgeModal);
+        knowledgeModalOverlay.addEventListener('click', (event) => {
+            if (event.target === knowledgeModalOverlay) { 
+                hideKnowledgeModal();
+            }
+        });
+
+        // New API Event Listeners
+        quoteButton.addEventListener('click', fetchRandomQuote);
+        holidaysButton.addEventListener('click', fetchPublicHolidays);
+
+
+        // --- Infinite Scrolling ---
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !isLoading) {
+                console.log("Reached end of feed, attempting to load more (re-fetch current sources).");
+                loadNews(false);
+            }
+        }, {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        });
+
+        observer.observe(loadingIndicator);
+
+        // Function to hide the loader
+        function hideLoader() {
+            evexaLoader.classList.add('hidden');
+        }
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            evexaLoader.classList.remove('hidden');
+
+            regionSelect.value = currentRegion;
+            redditToggle.checked = includeReddit;
+
+            selectedTopics = ['world', 'business', 'startups']; 
+            console.log('Initial selectedTopics before populating dropdown:', selectedTopics);
+
+            populateTopicDropdown(); 
+
+            selectedTopics.forEach(topic => {
+                const checkbox = document.getElementById(`topic-${topic}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    console.log(`Explicitly re-checked ${topic}. Current state: ${checkbox.checked}`);
+                }
+            });
+
+            loadNews(true).then(() => {
+                setTimeout(hideLoader, 1000); 
+            }).catch(error => {
+                console.error("Initial news load failed:", error);
+                setTimeout(hideLoader, 1000); 
+            });
+        });
+    </script>
+</body>
+</html>
